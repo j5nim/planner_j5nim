@@ -1,0 +1,41 @@
+<!-- index.html -->
+<!-- Entry point. Loads the app shell, sidebar, and main content area. -->
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Planner</title>
+
+  <!-- Pretendard CDN -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+  />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app">
+
+    <!-- Sidebar — populated by components/sidebar.js -->
+    <aside class="sidebar" id="sidebar"></aside>
+
+    <!-- Main -->
+    <div class="main-wrapper">
+      <header class="topbar">
+        <button class="menu-btn" id="menuBtn" aria-label="Open sidebar">&#9776;</button>
+        <span class="topbar-title" id="pageTitle">Home</span>
+      </header>
+
+      <main class="main-content" id="mainContent">
+        <!-- Page content renders here -->
+      </main>
+    </div>
+
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
