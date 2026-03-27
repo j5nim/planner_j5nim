@@ -2,6 +2,7 @@
 // Task list page. Displays, filters, and manages all tasks.
 
 import { getTasks, toggleTask, deleteTask, clearDoneTasks } from '../utils/storage.js';
+import { refreshSuggestion } from '../components/suggestion.js';
 
 // Active filter state
 const filter = { importance: 'all', urgency: 'all' };
@@ -36,6 +37,7 @@ export function render(container) {
         </div>
 
         <button class="clear-done-btn" id="clearDoneBtn">완료 항목 삭제</button>
+        <button class="suggest-btn" id="suggestBtn">💡 다음 행동 추천</button>
       </div>
 
       <div class="tasklist-summary" id="taskSummary"></div>
@@ -78,6 +80,9 @@ function bindEvents() {
     clearDoneTasks();
     renderList();
   });
+
+  // AI suggestion
+  document.getElementById('suggestBtn').addEventListener('click', refreshSuggestion);
 }
 
 // ─── Render ────────────────────────────────────────────────────────

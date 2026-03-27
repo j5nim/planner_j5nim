@@ -16,13 +16,13 @@ export function render(container) {
 
       ${!hasApiKey() ? `
       <div class="api-key-banner" id="apiKeyBanner">
-        <p>Gemini API 키를 입력해야 AI 기능을 사용할 수 있어요.</p>
+        <p>Groq API 키를 입력해야 AI 기능을 사용할 수 있어요.</p>
         <div class="api-key-row">
           <input
             type="password"
             id="apiKeyInput"
             class="api-key-input"
-            placeholder="AIza..."
+            placeholder="gsk_..."
             autocomplete="off"
           />
           <button class="api-key-save-btn" id="apiKeySave">저장</button>

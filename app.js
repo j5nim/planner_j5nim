@@ -7,7 +7,7 @@ import { render as renderTimetable } from './pages/timetable.js';
 import { render as renderTimer }     from './pages/timer.js';
 import { render as renderStats }     from './pages/stats.js';
 import { initSidebar }               from './components/sidebar.js';
-import { initSuggestion, refreshSuggestion } from './components/suggestion.js';
+import { initSuggestion } from './components/suggestion.js';
 
 const pageRenderers = {
   home:      renderHome,
@@ -33,18 +33,12 @@ function toggleTheme() {
 
 // ─── Routing ──────────────────────────────────────────────────────
 
-const SUGGEST_ON = new Set(['home', 'tasklist']);
-
 function loadPage(pageKey) {
   const renderer = pageRenderers[pageKey];
   if (renderer) {
     renderer(mainContent);
   } else {
     mainContent.innerHTML = `<p class="page-placeholder">${pageKey} — coming soon.</p>`;
-  }
-
-  if (SUGGEST_ON.has(pageKey)) {
-    setTimeout(refreshSuggestion, 400);
   }
 }
 

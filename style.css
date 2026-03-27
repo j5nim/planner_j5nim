@@ -1039,6 +1039,23 @@ button {
   color: var(--text);
 }
 
+.suggest-btn {
+  align-self: flex-start;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background-color: var(--bg-surface);
+  transition: background-color 0.15s, color 0.15s;
+}
+
+.suggest-btn:hover {
+  background-color: var(--accent);
+  color: var(--accent-text);
+}
+
 /* Summary */
 
 .tasklist-summary {
@@ -1230,56 +1247,64 @@ button {
 
 /* Grid */
 
+.tt-grid-wrap {
+  overflow-x: auto;
+}
+
 .tt-grid {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 480px;
+  display: grid;
+  grid-template-columns: 52px repeat(6, 40px);
+  width: fit-content;
   user-select: none;
   cursor: crosshair;
-}
-
-.tt-row {
-  display: flex;
-  align-items: stretch;
-  height: 10px;
-}
-
-.tt-row--hour {
-  height: 10px;
-}
-
-.tt-row--hour .tt-cell {
+  border-left: 1px solid var(--border);
   border-top: 1px solid var(--border);
 }
 
-/* Time label */
+/* Header row */
 
-.tt-time {
-  width: 48px;
-  flex-shrink: 0;
+.tt-corner {
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.tt-min-label {
   font-size: 10px;
   color: var(--text-muted);
-  line-height: 1;
-  padding-top: 1px;
-  text-align: right;
-  padding-right: 8px;
-  transform: translateY(-50%);
+  text-align: center;
+  padding: 4px 0;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
+
+/* Hour label */
+
+.tt-hour-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: right;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
 
 /* Cell */
 
 .tt-cell {
-  flex: 1;
-  height: 100%;
-  border-left: 1px solid var(--border);
+  height: 32px;
   border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   transition: opacity 0.1s;
 }
 
-.tt-row:last-child .tt-cell {
-  border-bottom: 1px solid var(--border);
-}
 
 .tt-cell--filled {
   opacity: 0.85;

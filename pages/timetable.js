@@ -1,10 +1,10 @@
 // pages/timetable.js
-// Timetable page. Drag-to-paint time blocking interface.
+// Timetable page. Matrix grid: rows = hours (06:00~06:00), columns = 10-min slots.
 
 import { getTasks } from '../utils/storage.js';
 
-const SLOT_COUNT  = 144; // 24h × 6 slots (10 min each)
-const BLOCKS_KEY  = 'planner_timetable_blocks';
+const SLOT_COUNT = 144; // 24h × 6 slots (10 min each), starting at 06:00
+const BLOCKS_KEY = 'planner_timetable_blocks';
 const COLORS = [
   { hex: '#FFE066', label: '노랑' },
   { hex: '#FF6B6B', label: '빨강' },
@@ -15,7 +15,7 @@ const COLORS = [
   { hex: '#F783AC', label: '분홍' },
 ];
 
-// ─── Timetable block storage ───────────────────────────────────────
+// ─── Storage ───────────────────────────────────────────────────────
 
 function loadBlocks() {
   try { return JSON.parse(localStorage.getItem(BLOCKS_KEY) || '[]'); }
@@ -26,20 +26,21 @@ function persistBlocks(blocks) {
   localStorage.setItem(BLOCKS_KEY, JSON.stringify(blocks));
 }
 
-// ─── Module state (reset on every render call) ─────────────────────
+// ─── Module state ──────────────────────────────────────────────────
 
 let blocks      = [];
 let activeColor = COLORS[0].hex;
 let drag        = { active: false, startSlot: null, endSlot: null };
-let pending     = null; // { startSlot, endSlot, color } — awaiting confirmation
+let pending     = null;
 
-// ─── Helpers ──────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────
 
+// slot 0 = 06:00, slot 143 = 05:50 (next day)
 function slotToTime(slot) {
-  if (slot >= SLOT_COUNT) return '24:00';
-  const h = String(Math.floor(slot / 6)).padStart(2, '0');
-  const m = String((slot % 6) * 10).padStart(2, '0');
-  return `${h}:${m}`;
+  const totalMinutes = (slot * 10 + 6 * 60) % (24 * 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
 function clamp(slot) {
@@ -63,7 +64,6 @@ function escapeHtml(str) {
 // ─── Render ────────────────────────────────────────────────────────
 
 export function render(container) {
-  // Reset module state each time the page is loaded
   blocks      = loadBlocks();
   activeColor = COLORS[0].hex;
   drag        = { active: false, startSlot: null, endSlot: null };
@@ -87,8 +87,10 @@ export function render(container) {
         <button class="tt-clear-btn" id="ttClearAll">전체 초기화</button>
       </div>
 
-      <div class="tt-grid" id="ttGrid">
-        ${buildGrid()}
+      <div class="tt-grid-wrap">
+        <div class="tt-grid" id="ttGrid">
+          ${buildGrid()}
+        </div>
       </div>
 
       <!-- Step 1: Confirm time range -->
@@ -118,24 +120,37 @@ export function render(container) {
   bindEvents();
 }
 
+// ─── Grid builder ──────────────────────────────────────────────────
+
 function buildGrid() {
   let html = '';
-  for (let i = 0; i < SLOT_COUNT; i++) {
-    const isHour  = i % 6 === 0;
-    const timeStr = isHour ? slotToTime(i) : '';
-    html += `
-      <div class="tt-row${isHour ? ' tt-row--hour' : ''}" data-slot="${i}">
-        <span class="tt-time">${timeStr}</span>
-        <div class="tt-cell" data-slot="${i}"></div>
-      </div>`;
+
+  // Header row: corner + minute labels
+  html += '<div class="tt-corner"></div>';
+  for (let m = 0; m < 6; m++) {
+    html += `<div class="tt-min-label">:${String(m * 10).padStart(2, '0')}</div>`;
   }
+
+  // 24 hour rows (06:00 ~ 05:00 next day)
+  for (let h = 0; h < 24; h++) {
+    const baseSlot  = h * 6;
+    const timeStr   = slotToTime(baseSlot);
+    const isMidnight = baseSlot === 108; // slot 108 = 00:00 next day
+
+    html += `<div class="tt-hour-label">${timeStr}</div>`;
+
+    for (let m = 0; m < 6; m++) {
+      const slot = baseSlot + m;
+      html += `<div class="tt-cell" data-slot="${slot}"></div>`;
+    }
+  }
+
   return html;
 }
 
 // ─── Block painting ────────────────────────────────────────────────
 
 function applyBlocks() {
-  // Clear all cells
   document.querySelectorAll('.tt-cell').forEach(cell => {
     cell.style.backgroundColor = '';
     cell.classList.remove('tt-cell--filled');
@@ -143,7 +158,6 @@ function applyBlocks() {
     cell.title = '';
   });
 
-  // Paint each block
   blocks.forEach(block => {
     for (let s = block.startSlot; s <= block.endSlot; s++) {
       const cell = document.querySelector(`.tt-cell[data-slot="${s}"]`);
@@ -181,7 +195,7 @@ function clearPreview() {
 function bindEvents() {
   const grid = document.getElementById('ttGrid');
 
-  // ── Palette ──
+  // Palette
   document.getElementById('ttPalette').addEventListener('click', e => {
     const swatch = e.target.closest('.palette-swatch');
     if (!swatch) return;
@@ -190,14 +204,14 @@ function bindEvents() {
     activeColor = swatch.dataset.color;
   });
 
-  // ── Clear all ──
+  // Clear all
   document.getElementById('ttClearAll').addEventListener('click', () => {
     blocks = [];
     persistBlocks(blocks);
     applyBlocks();
   });
 
-  // ── Drag: start ──
+  // Drag: start
   grid.addEventListener('mousedown', e => {
     const cell = e.target.closest('.tt-cell');
     if (!cell) return;
@@ -207,7 +221,7 @@ function bindEvents() {
     applyPreview(slot, slot);
   });
 
-  // ── Drag: move ──
+  // Drag: move
   grid.addEventListener('mousemove', e => {
     if (!drag.active) return;
     const cell = e.target.closest('.tt-cell');
@@ -218,10 +232,10 @@ function bindEvents() {
     applyPreview(drag.startSlot, drag.endSlot);
   });
 
-  // ── Drag: end (document-level to catch mouseup outside grid) ──
+  // Drag: end
   document.addEventListener('mouseup', onMouseUp);
 
-  // ── Confirm modal ──
+  // Confirm modal
   document.getElementById('ttConfirmYes').addEventListener('click', () => {
     hideOverlay('ttConfirmOverlay');
     showTaskModal();
@@ -233,7 +247,7 @@ function bindEvents() {
     pending = null;
   });
 
-  // ── Task modal: skip ──
+  // Task modal: skip
   document.getElementById('ttSkip').addEventListener('click', () => {
     commitBlock(null, null);
     hideOverlay('ttTaskOverlay');
@@ -253,7 +267,7 @@ function onMouseUp() {
 
 function showConfirmModal(start, end) {
   const startTime = slotToTime(start);
-  const endTime   = slotToTime(end + 1);
+  const endTime   = slotToTime((end + 1) % SLOT_COUNT);
   document.getElementById('ttConfirmMsg').textContent =
     `${startTime} ~ ${endTime} 이 시간대가 맞나요?`;
   showOverlay('ttConfirmOverlay');
@@ -298,15 +312,14 @@ function showTaskModal() {
 
 function commitBlock(taskId, taskTitle) {
   if (!pending) return;
-  const block = {
+  blocks.push({
     id:        generateId(),
     startSlot: pending.startSlot,
     endSlot:   pending.endSlot,
     color:     pending.color,
     taskId:    taskId ?? null,
     taskTitle: taskTitle ?? null,
-  };
-  blocks.push(block);
+  });
   persistBlocks(blocks);
   clearPreview();
   applyBlocks();
@@ -315,10 +328,5 @@ function commitBlock(taskId, taskTitle) {
 
 // ─── Overlay helpers ───────────────────────────────────────────────
 
-function showOverlay(id) {
-  document.getElementById(id).hidden = false;
-}
-
-function hideOverlay(id) {
-  document.getElementById(id).hidden = true;
-}
+function showOverlay(id) { document.getElementById(id).hidden = false; }
+function hideOverlay(id) { document.getElementById(id).hidden = true; }

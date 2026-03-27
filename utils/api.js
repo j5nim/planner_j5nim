@@ -1,21 +1,22 @@
 // utils/api.js
-// Gemini API client. Handles request formatting, auth, and response parsing.
+// Groq API client. Handles request formatting, auth, and response parsing.
 //
 // API key is read from config.js (browser-readable). To set your key, edit
 // config.js at the project root. That file is gitignored so it won't be committed.
 
-import { GEMINI_API_KEY as CONFIG_KEY } from '../config.js';
+import { GROQ_API_KEY as CONFIG_KEY } from '../config.js';
 
-const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+const MODEL        = 'llama-3.3-70b-versatile';
 
 // ─── API key helpers ───────────────────────────────────────────────
 
 export function setApiKey(key) {
-  localStorage.setItem('gemini_api_key', key.trim());
+  localStorage.setItem('groq_api_key', key.trim());
 }
 
 export function getApiKey() {
-  return localStorage.getItem('gemini_api_key') || CONFIG_KEY || '';
+  return localStorage.getItem('groq_api_key') || CONFIG_KEY || '';
 }
 
 export function hasApiKey() {
@@ -43,7 +44,7 @@ Rules:
 - Output must be parseable by JSON.parse() with no surrounding text.`;
 
 /**
- * Sends a natural language string to Gemini and returns an array of
+ * Sends a natural language string to Groq and returns an array of
  * structured task objects.
  *
  * @param {string} input  Raw user input
@@ -56,16 +57,23 @@ export async function parseTasks(input) {
   if (!apiKey) throw new ApiKeyMissingError();
 
   const body = {
-    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-    contents: [{ parts: [{ text: input.trim() }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 1024 },
+    model: MODEL,
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user',   content: input.trim() },
+    ],
+    temperature: 0.2,
+    max_tokens:  1024,
   };
 
   let response;
   try {
-    response = await fetch(`${GEMINI_API_BASE}?key=${encodeURIComponent(apiKey)}`, {
+    response = await fetch(GROQ_API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify(body),
     });
   } catch (err) {
@@ -78,7 +86,7 @@ export async function parseTasks(input) {
   }
 
   const data = await response.json();
-  const raw  = data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+  const raw  = data?.choices?.[0]?.message?.content ?? '';
 
   return parseJsonSafely(raw);
 }
@@ -122,16 +130,23 @@ export async function suggestNextTask(tasks) {
     : '현재 등록된 할 일이 없습니다.';
 
   const body = {
-    systemInstruction: { parts: [{ text: SUGGEST_SYSTEM }] },
-    contents: [{ parts: [{ text: userContent }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 512 },
+    model: MODEL,
+    messages: [
+      { role: 'system', content: SUGGEST_SYSTEM },
+      { role: 'user',   content: userContent },
+    ],
+    temperature: 0.2,
+    max_tokens:  512,
   };
 
   let response;
   try {
-    response = await fetch(`${GEMINI_API_BASE}?key=${encodeURIComponent(apiKey)}`, {
+    response = await fetch(GROQ_API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
       body: JSON.stringify(body),
     });
   } catch (err) {
@@ -144,7 +159,7 @@ export async function suggestNextTask(tasks) {
   }
 
   const data = await response.json();
-  const raw  = (data?.candidates?.[0]?.content?.parts?.[0]?.text ?? '').trim();
+  const raw  = (data?.choices?.[0]?.message?.content ?? '').trim();
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 
   if (cleaned === 'null' || cleaned === '') return null;
@@ -159,11 +174,6 @@ export async function suggestNextTask(tasks) {
 
 // ─── JSON extraction ───────────────────────────────────────────────
 
-/**
- * Strips any accidental markdown fences and parses the JSON array.
- * @param {string} raw
- * @returns {Task[]}
- */
 function parseJsonSafely(raw) {
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
 
@@ -189,7 +199,7 @@ export class ApiKeyMissingError extends Error {
 
 export class ApiError extends Error {
   constructor(status, message) {
-    super(`Gemini API error ${status}: ${message}`);
+    super(`Groq API error ${status}: ${message}`);
     this.name = 'ApiError';
     this.status = status;
   }
@@ -204,7 +214,7 @@ export class NetworkError extends Error {
 
 export class ParseError extends Error {
   constructor(raw) {
-    super(`Failed to parse Gemini response as JSON.\nRaw: ${raw}`);
+    super(`Failed to parse Groq response as JSON.\nRaw: ${raw}`);
     this.name = 'ParseError';
   }
 }
