@@ -1,21 +1,61 @@
-<!-- index.html -->
-<!-- Entry point. Loads the app shell, sidebar, and main content area. -->
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="ko" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AI 기반 개인 일정관리 앱" />
   <title>Planner</title>
 
   <!-- Pretendard CDN -->
   <link
     rel="stylesheet"
+    as="style"
+    crossorigin
     href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    onload="this.rel='stylesheet'"
   />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
+    />
+  </noscript>
 
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
+  <!-- ES module 환경 체크: file:// 로 직접 열면 경고 표시 -->
+  <script>
+    if (location.protocol === 'file:') {
+      document.write(`
+        <div style="
+          position:fixed;inset:0;z-index:99999;
+          display:flex;align-items:center;justify-content:center;
+          background:#000;color:#fff;font-family:sans-serif;
+          padding:32px;text-align:center;
+        ">
+          <div>
+            <p style="font-size:18px;font-weight:700;margin-bottom:12px;">
+              ⚠ 로컬 서버가 필요해요
+            </p>
+            <p style="font-size:14px;color:#aaa;line-height:1.7;">
+              이 앱은 ES 모듈을 사용하기 때문에<br/>
+              <code style="color:#fff">file://</code> 로 직접 열면 동작하지 않아요.<br/><br/>
+              터미널에서 아래 명령어를 실행해주세요:<br/>
+              <code style="
+                display:inline-block;margin-top:10px;
+                background:#222;padding:8px 16px;border-radius:6px;
+                font-size:15px;letter-spacing:0.5px;
+              ">npx serve .</code>
+              <br/><br/>
+              또는 VS Code Live Server 확장을 사용하세요.
+            </p>
+          </div>
+        </div>
+      `);
+    }
+  </script>
 
   <div class="app">
 
@@ -25,8 +65,8 @@
     <!-- Main -->
     <div class="main-wrapper">
       <header class="topbar">
-        <button class="menu-btn" id="menuBtn" aria-label="Open sidebar">&#9776;</button>
-        <span class="topbar-title" id="pageTitle">Home</span>
+        <button class="menu-btn" id="menuBtn" aria-label="사이드바 토글">&#9776;</button>
+        <span class="topbar-title" id="pageTitle">홈</span>
       </header>
 
       <main class="main-content" id="mainContent">

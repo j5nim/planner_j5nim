@@ -3,6 +3,7 @@
 
 import { getGreeting } from '../utils/greeting.js';
 import { parseTasks, hasApiKey, setApiKey, ApiKeyMissingError } from '../utils/api.js';
+import { addTasks } from '../utils/storage.js';
 
 /**
  * Renders the home page into the given container element.
@@ -15,13 +16,13 @@ export function render(container) {
 
       ${!hasApiKey() ? `
       <div class="api-key-banner" id="apiKeyBanner">
-        <p>Claude API 키를 입력해야 AI 기능을 사용할 수 있어요.</p>
+        <p>Gemini API 키를 입력해야 AI 기능을 사용할 수 있어요.</p>
         <div class="api-key-row">
           <input
             type="password"
             id="apiKeyInput"
             class="api-key-input"
-            placeholder="sk-ant-..."
+            placeholder="AIza..."
             autocomplete="off"
           />
           <button class="api-key-save-btn" id="apiKeySave">저장</button>
@@ -104,6 +105,7 @@ async function handleSubmit() {
 
   try {
     const tasks = await parseTasks(input);
+    addTasks(tasks);
     renderResults(tasks);
     textarea.value = '';
     textarea.style.height = 'auto';

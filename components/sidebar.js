@@ -21,11 +21,12 @@ const USAGE_TIPS = [
 
 // ─── Module state ──────────────────────────────────────────────────
 
-let sidebarEl   = null;
-let iconOnly    = false;
-let activePage  = 'home';
-let _onNavigate = () => {};
-let _onTheme    = () => {};
+let sidebarEl    = null;
+let iconOnly     = false;
+let activePage   = 'home';
+let _onNavigate  = () => {};
+let _onTheme     = () => {};
+let navTooltipEl = null; // body-level floating tooltip for icon-only mode
 
 // ─── Init ──────────────────────────────────────────────────────────
 
@@ -43,8 +44,9 @@ export function initSidebar({ onNavigate, onThemeToggle }) {
   iconOnly = localStorage.getItem('sidebar_icon_only') === 'true';
 
   sidebarEl.innerHTML = buildHTML();
-  applyIconOnly(false); // apply without animation on first load
+  applyIconOnly(false);
   syncThemeIcon();
+  mountNavTooltip();
   bindEvents();
 
   return { toggle, setActive };
@@ -127,23 +129,52 @@ function buildHTML() {
   `;
 }
 
+// ─── Nav tooltip (body-level, escapes overflow:hidden) ─────────────
+
+function mountNavTooltip() {
+  navTooltipEl = document.createElement('div');
+  navTooltipEl.className = 'sb-nav-tooltip';
+  navTooltipEl.hidden = true;
+  document.body.appendChild(navTooltipEl);
+}
+
+function showNavTooltip(item) {
+  if (!iconOnly || !navTooltipEl) return;
+  const rect = item.getBoundingClientRect();
+  navTooltipEl.textContent = item.getAttribute('aria-label');
+  navTooltipEl.style.top  = `${rect.top + rect.height / 2}px`;
+  navTooltipEl.style.left = `${rect.right + 10}px`;
+  navTooltipEl.hidden = false;
+}
+
+function hideNavTooltip() {
+  if (navTooltipEl) navTooltipEl.hidden = true;
+}
+
 // ─── Events ────────────────────────────────────────────────────────
 
 function bindEvents() {
   // Sidebar collapse toggle (inside)
   document.getElementById('sbToggleBtn').addEventListener('click', toggle);
 
-  // Topbar hamburger (outside — may not exist yet if called early)
+  // Topbar hamburger
   const menuBtn = document.getElementById('menuBtn');
   if (menuBtn) menuBtn.addEventListener('click', toggle);
 
-  // Navigation
-  document.getElementById('sbNav').addEventListener('click', e => {
+  // Navigation + nav tooltip
+  const sbNav = document.getElementById('sbNav');
+  sbNav.addEventListener('click', e => {
     const item = e.target.closest('.nav-item');
     if (!item) return;
     e.preventDefault();
+    hideNavTooltip();
     setActive(item.dataset.page);
     _onNavigate(item.dataset.page);
+  });
+
+  sbNav.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('mouseenter', () => showNavTooltip(item));
+    item.addEventListener('mouseleave', hideNavTooltip);
   });
 
   // Theme
@@ -152,20 +183,22 @@ function bindEvents() {
     syncThemeIcon();
   });
 
-  // ⓘ tooltip — hover
-  const infoBtn  = document.getElementById('sbInfo');
-  const tooltip  = document.getElementById('sbTooltip');
+  // ⓘ tooltip — position using getBoundingClientRect so it escapes overflow
+  const infoBtn = document.getElementById('sbInfo');
+  const tooltip = document.getElementById('sbTooltip');
 
   infoBtn.addEventListener('mouseenter', () => {
+    const rect = infoBtn.getBoundingClientRect();
+    tooltip.style.left   = `${rect.right + 10}px`;
+    tooltip.style.bottom = `${window.innerHeight - rect.bottom - 8}px`;
+    tooltip.style.top    = 'auto';
     tooltip.classList.add('visible');
-    tooltip.setAttribute('aria-hidden', 'false');
   });
   infoBtn.addEventListener('mouseleave', () => {
-    tooltip.classList.remove('visible');
-    tooltip.setAttribute('aria-hidden', 'true');
+    setTimeout(() => {
+      if (!tooltip.matches(':hover')) tooltip.classList.remove('visible');
+    }, 80);
   });
-  // Also keep open while hovering tooltip itself
-  tooltip.addEventListener('mouseenter', () => tooltip.classList.add('visible'));
   tooltip.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
 
   // ? feedback

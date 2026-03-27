@@ -88,7 +88,7 @@ button {
   background-color: var(--bg-surface);
   border-right: 1px solid var(--border);
   transition: width 0.22s ease;
-  overflow: visible; /* allow tooltip to overflow */
+  overflow: hidden;
   position: relative;
   z-index: 20;
 }
@@ -120,13 +120,13 @@ button {
   white-space: nowrap;
   overflow: hidden;
   opacity: 1;
-  transition: opacity 0.15s, width 0.22s;
-  width: auto;
+  max-width: 160px;
+  transition: opacity 0.15s, max-width 0.22s;
 }
 
 .sidebar.icon-only .sidebar-logo {
   opacity: 0;
-  width: 0;
+  max-width: 0;
   pointer-events: none;
 }
 
@@ -157,7 +157,6 @@ button {
   gap: 2px;
   padding: 10px 6px;
   overflow-y: auto;
-  overflow-x: hidden;
 }
 
 .nav-item {
@@ -171,8 +170,6 @@ button {
   color: var(--text-muted);
   transition: background-color 0.15s, color 0.15s;
   white-space: nowrap;
-  overflow: hidden;
-  position: relative;
 }
 
 .nav-item:hover {
@@ -206,31 +203,24 @@ button {
   pointer-events: none;
 }
 
-/* Icon-only: tooltip showing page name on hover */
+/* Icon-only: JS tooltip (see sidebar.js) */
 
-.sidebar.icon-only .nav-item::after {
-  content: attr(aria-label);
-  position: absolute;
-  left: calc(var(--sb-collapsed) - 6px);
-  top: 50%;
-  transform: translateY(-50%);
+.sb-nav-tooltip {
+  position: fixed;
   background-color: var(--bg-surface);
   color: var(--text);
   border: 1px solid var(--border);
   padding: 5px 10px;
   border-radius: 6px;
+  font-family: "Pretendard", sans-serif;
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  opacity: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
   pointer-events: none;
-  transition: opacity 0.15s;
-  z-index: 50;
-}
-
-.sidebar.icon-only .nav-item:hover::after {
-  opacity: 1;
+  z-index: 9999;
+  transform: translateY(-50%);
+  transition: opacity 0.12s;
 }
 
 /* ─── Sidebar footer ──────────────────────────────────────────── */
@@ -279,31 +269,22 @@ button {
 }
 
 .sb-tooltip {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 0;
+  position: fixed;
   width: 260px;
   background-color: var(--bg);
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px 16px;
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
-  z-index: 100;
+  z-index: 9999;
   pointer-events: none;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.18s, transform 0.18s;
-}
-
-.sidebar.icon-only .sb-tooltip {
-  left: calc(var(--sb-collapsed));
-  bottom: 0;
+  transition: opacity 0.18s;
 }
 
 .sb-tooltip.visible {
   opacity: 1;
   pointer-events: auto;
-  transform: translateY(0);
 }
 
 .sb-tooltip-title {
@@ -342,6 +323,10 @@ button {
   align-items: center;
   justify-content: center;
   z-index: 300;
+}
+
+.sb-feedback-overlay[hidden] {
+  display: none;
 }
 
 .sb-feedback-modal {
@@ -1318,6 +1303,10 @@ button {
   align-items: center;
   justify-content: center;
   z-index: 100;
+}
+
+.tt-overlay[hidden] {
+  display: none;
 }
 
 .tt-modal {

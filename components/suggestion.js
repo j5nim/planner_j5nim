@@ -1,5 +1,5 @@
 // components/suggestion.js
-// AI next-step suggestion panel. Requests and renders Claude's recommendations.
+// AI next-step suggestion panel. Requests and renders Gemini's recommendations.
 //
 // Usage (call once from app.js):
 //   import { initSuggestion, refreshSuggestion } from './components/suggestion.js';
